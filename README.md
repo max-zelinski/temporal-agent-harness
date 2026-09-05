@@ -458,6 +458,19 @@ Open <http://localhost:8000> and pick an agent. Every example follows the same r
 serves the prebuilt UI from `temporal_agent_harness/ui/dist`, so it needs no Node/pnpm. If you're
 changing the UI, use `just dev-server` (rebuild + serve) instead.
 
+### In Docker
+
+The Monty stack (Temporal dev server, session-manager worker, API/UI server, agent worker) also
+runs as containers — no local `uv`, `just`, or `temporal` CLI needed:
+
+```bash
+GEMINI_API_KEY=... docker compose -f docker/compose.yaml up --build
+```
+
+UI on <http://localhost:8000>, Temporal Web on <http://localhost:8233>. The model-free
+**Monty (Dynamic)** agent runs without a real key (the worker still requires the variable to be
+set). State lives in the dev server's in-memory persistence, so `down` discards it.
+
 ### All examples behind one UI
 
 The **root** justfile runs every example agent at once so the UI lists them all. From the project root,

@@ -1,0 +1,14 @@
+.git
+.venv
+.env
+.env.local
+*.egg-info
+__pycache__/
+.pytest_cache/
+.build/
+dist/
+ui/node_modules
+nexus/devserver
+nexus/integration_tests
+nexus/ui_connector
+docs

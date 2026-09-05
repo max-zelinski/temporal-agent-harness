@@ -29,3 +29,12 @@ Same conversational travel-booking experience as Monty (Conversational), but ins
 of running its Python scripts inline it drives the barebones Monty (Dynamic) agent as
 a SUBAGENT — starting a script-runner instance and sending it each script over the
 harness subagent toolset. The first end-to-end demo of agents-as-subagents."""
+
+[[agents]]
+key = "monty-dynamic"
+workflow_type = "MontyDynamicAgent"
+task_queue = "monty-dynamic-agent"
+label = "Monty (Dynamic)"
+description = """
+No model in the loop: each turn is a caller-supplied pydantic-monty Python script,
+run in the sandbox over durable flight/hotel search + booking activities."""
