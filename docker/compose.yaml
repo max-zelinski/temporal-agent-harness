@@ -1,0 +1,69 @@
+# The Monty example stack in containers: Temporal dev server + session-manager worker +
+# FastAPI/UI server + the Monty agent worker.
+#
+#   docker compose -f docker/compose.yaml up --build
+#
+# UI:            http://localhost:8000
+# Temporal Web:  http://localhost:8233
+#
+# GEMINI_API_KEY is read from the environment (or the repo-root .env.local). The Monty worker
+# requires it at startup; only the conversational agents actually call Gemini.
+
+name: temporal-agent-harness
+
+x-app: &app
+  build:
+    context: ..
+    dockerfile: docker/Dockerfile
+  environment:
+    TEMPORAL_CONFIG_FILE: docker/temporal.docker.toml
+    TEMPORAL_PROFILE: default
+    LARGE_PAYLOAD_DRIVER: local
+    LARGE_PAYLOAD_DIR: /large-payloads
+    GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+    OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+  volumes:
+    # Offloaded large payloads (Monty sandbox snapshots) are written by one process and read by
+    # another, so every service must see the same directory.
+    - large-payloads:/large-payloads
+  depends_on:
+    temporal:
+      condition: service_healthy
+
+services:
+  temporal:
+    image: temporalio/temporal:latest
+    command: ["server", "start-dev", "--ip", "0.0.0.0", "--ui-ip", "0.0.0.0"]
+    ports:
+      - "7233:7233"
+      - "8233:8233"
+    healthcheck:
+      test: ["CMD", "temporal", "workflow", "list", "--address", "127.0.0.1:7233"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+
+  session-manager:
+    <<: *app
+    command: ["python", "-m", "examples.session_manager_worker"]
+
+  worker:
+    <<: *app
+    command: ["python", "-m", "examples.monty.worker"]
+
+  server:
+    <<: *app
+    command:
+      - "python"
+      - "-m"
+      - "examples.app"
+      - "examples/monty/agents.toml"
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "8000"
+    ports:
+      - "8000:8000"
+
+volumes:
+  large-payloads:

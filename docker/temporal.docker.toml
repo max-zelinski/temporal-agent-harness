@@ -1,0 +1,5 @@
+# Connection profile used inside the compose stack: the dev server runs as the `temporal` service.
+[profile]
+  [profile.default]
+    address = "temporal:7233"
+    namespace = "default"
