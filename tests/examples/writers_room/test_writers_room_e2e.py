@@ -11,9 +11,16 @@
 from __future__ import annotations
 
 import json
+import os
 import uuid
 from datetime import timedelta
 from typing import Any
+
+# The example builds its staff and showrunner agents at module import, and the OpenAI
+# provider resolves eagerly — so an OPENAI_API_KEY must exist before the imports below
+# (and before the sandbox loads its own copies). It is never sent anywhere: every model
+# call in this file is dispatched by activity name to the scripted test models.
+os.environ.setdefault("OPENAI_API_KEY", "writers-room-test")
 
 import pytest_asyncio
 from pydantic_ai.durable_exec.temporal import AgentPlugin, PydanticAIPlugin
@@ -295,20 +302,17 @@ def _test_cast() -> tuple[FunctionModel, dict[str, Any]]:
 
 
 @pytest_asyncio.fixture
-async def env_and_queue(monkeypatch):
-    """A time-skipping env, the scripted cast swapped in, and one worker hosting the
-    whole agent tree (exactly like the example's worker.py, minus the real model/tools).
+async def env_and_queue():
+    """A time-skipping env plus one worker hosting the whole agent tree (exactly like
+    the example's worker.py, minus the real model/tools).
 
-    Both swaps go through ``staff``, which the workflow file imports under
-    ``imports_passed_through`` — i.e. the REAL module, shared with this test:
-      * ``staff.STAFF`` — rebound wholesale to the scripted staff;
-      * ``staff.DEFAULT_MODEL`` — rebound BEFORE the sandbox loads workflow.py, so its
-        import-time ``build_showrunner(staff.DEFAULT_MODEL)`` picks up the scripted
-        showrunner model too.
+    The scripted cast is injected through WORKER REGISTRATION alone: inside the
+    sandbox, ``staff``/``workflow`` are fresh restricted copies whose TemporalAgents
+    only dispatch model and tool calls to activities on the worker *by name*. So the
+    test just registers the scripted agents' activities via ``AgentPlugin`` — every
+    ``TemporalAgent.run`` in workflow code then lands on the test models.
     """
-    showrunner_model, test_staff, showrunner = _test_cast()
-    monkeypatch.setattr(staff, "STAFF", test_staff)
-    monkeypatch.setattr(staff, "DEFAULT_MODEL", showrunner_model)
+    _, test_staff, showrunner = _test_cast()
 
     env = await WorkflowEnvironment.start_time_skipping(
         data_converter=pydantic_data_converter
