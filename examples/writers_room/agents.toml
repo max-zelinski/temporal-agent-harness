@@ -1,0 +1,23 @@
+# Registry of agents the writers-room example UI can launch.
+#
+# The packaged FastAPI server (`temporal-agent-harness serve`) reads this file and passes the parsed
+# registry into the packaged SessionManagerWorkflow as its workflow init arg. The
+# manager then serves it back over the `available_agents` query, so the app server
+# can expose it at /api/agents without hardcoding the agent list.
+#
+# Only the top-level showrunner is registered: the three container agents (writers room,
+# preproduction, file writer) are started by it as subagents on the same task queue —
+# they aren't directly driveable.
+
+[[agents]]
+key = "writers-room"
+workflow_type = "FilmConceptTeam"
+agent = "examples.writers_room.workflow:FilmConceptTeamWorkflow"
+task_queue = "writers-room"
+label = "Writers Room"
+description = """
+An ADK-style multi-agent film-concept team on Pydantic AI. Give the showrunner a
+historical subject (e.g. "Ada Lovelace") and it sequences three container agents: a
+writers room that researches Wikipedia and iterates a screenwriter/critic loop until the
+draft is approved, a preproduction team that estimates box office and casts the film in
+parallel, and a file writer that lands the pitch document on the worker's disk."""
