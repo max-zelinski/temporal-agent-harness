@@ -168,6 +168,8 @@ def build_staff(model: str | Model | Mapping[str, str | Model]) -> dict[str, Tem
 
 
 # The production staff, built once at module load on the default model. Container
-# workflows reference it as `staff.STAFF` at call time, so a test can swap in a whole
-# TestModel-built cast by rebinding this one name.
+# workflows reference it as `staff.STAFF` at call time. In the workflow sandbox this
+# module is a restricted copy — the agents built there only dispatch model/tool calls
+# to worker-registered activities by name, so what actually runs is whatever agents
+# the worker registers (a real cast in production, scripted models in tests).
 STAFF = build_staff(DEFAULT_MODEL)

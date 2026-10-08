@@ -282,9 +282,9 @@ def build_showrunner(model: str | Model) -> TemporalAgent:
 
 
 # Built once at module load — its activities are registered on the worker via
-# AgentPlugin (see worker.py). The model comes through `staff.DEFAULT_MODEL` (a
-# pass-through module attribute) so a test can swap in a scripted model by rebinding
-# that one name before the worker loads this module.
+# AgentPlugin (see worker.py). In the workflow sandbox this module is a restricted
+# copy: the showrunner built here only dispatches to worker-registered activities by
+# name, so the model object itself never matters for what actually runs.
 SHOWRUNNER = build_showrunner(staff.DEFAULT_MODEL)
 
 
